@@ -1,20 +1,20 @@
 import db
 import scraputils as su
-import random
-
+from random import choice
 
 s = db.session()
-try:
-    for dic in su.get_news(n_pages=15):
+
+for dic in su.get_news(n_pages=3):
+    try:
         new = db.News(
             title=dic['title'],
             author=dic['authors'],
             url=dic['link'],
             comments=dic['comments'],
             points=dic['points'],
-            label=random.choice(('good', 'maybe', 'never'))
-        )
+            label=choice(('good', 'maybe', 'never'))
+            )
         s.add(new)
         s.commit()
-except Exception as e:
-    print(e)
+    except Exception as e:
+        print(e)
