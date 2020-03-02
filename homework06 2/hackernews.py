@@ -1,10 +1,11 @@
 from bottle import (
     route, run, template, request, redirect
 )
-
 from scraputils import get_news
 from db import News, session
 from bayes import NaiveBayesClassifier
+import string
+from collections import deque
 
 
 @route('/')
@@ -50,11 +51,29 @@ def update_news(pages=1):
         redirect("/news")
 
 
+def clean(s):
+    translator = str.maketrans("", "", string.punctuation)
+    return s.translate(translator)
+
+
 @route("/classify")
 def classify_news():
-    # PUT YOUR CODE HERE
-    pass
+    s = session()
+    rows = s.query(News).filter(News.label == None).all()
+
+    model = NaiveBayesClassifier()
+    model.import_model('news_model.json')
+    predictions = model.predict([row.title for row in rows])
+
+    d = deque()
+    for new, pred in zip(rows, predictions):
+        if pred == 'good':
+            d.appendleft(new)
+        elif pred == 'never':
+            d.append(new)
+
+    return template('classify', rows=d)
 
 
 if __name__ == "__main__":
-    run(host="localhost", port=8888)
+    run(host="localhost", port=1113)
